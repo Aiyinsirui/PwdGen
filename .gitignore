@@ -1,0 +1,29 @@
+# --- Android / Gradle ---
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+build/
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+.kotlin/
+.install/
+.operit/
+.backup/
+tools/
+
+# --- Secrets (NEVER commit) ---
+keystore.properties
+*.jks
+*.keystore
+*.p12
+*.pepk
+secrets.properties

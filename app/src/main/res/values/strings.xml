@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PwdGen</string>
+
+    <!-- Generate screen -->
+    <string name="master_password">Master password</string>
+    <string name="site">Site</string>
+    <string name="login">Login / email</string>
+    <string name="options">Options</string>
+    <string name="length">Length: %1$d</string>
+    <string name="counter">Counter: %1$d</string>
+    <string name="use_special">Use special characters</string>
+    <string name="strength">Strength: %1$d bits</string>
+    <string name="generate">Generate</string>
+    <string name="generated_password">Generated password</string>
+    <string name="copy">Copy</string>
+    <string name="copied">Copied to clipboard</string>
+    <string name="clear">Clear</string>
+
+    <!-- Errors / messages -->
+    <string name="err_site_required">Please enter a site name</string>
+    <string name="err_login_required">Please enter a login / email</string>
+    <string name="err_master_required">Please enter your master password</string>
+    <string name="err_generate">Could not generate password</string>
+
+    <!-- Navigation / generic -->
+    <string name="back">Back</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="close">Close</string>
+    <string name="delete">Delete</string>
+
+    <!-- Sites screen -->
+    <string name="sites_title">Sites</string>
+    <string name="sites_empty">No sites yet</string>
+    <string name="import_sites">Import</string>
+    <string name="export_sites">Export</string>
+    <string name="import_hint">Paste the base64 encoded site list here</string>
+    <string name="do_import">Import</string>
+    <string name="import_ok">Sites imported</string>
+    <string name="clear_all">Clear all</string>
+    <string name="clear_all_confirm">Remove every saved site? This cannot be undone.</string>
+
+    <!-- Settings screen -->
+    <string name="settings_title">Settings</string>
+
+    <string name="section_look">Look</string>
+    <string name="language">Language</string>
+    <string name="lang_system">System</string>
+    <string name="lang_en">English</string>
+    <string name="lang_zh">中文</string>
+    <string name="theme">Theme</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="dynamic_color">Dynamic color (Android 12+)</string>
+
+    <string name="section_wallpaper">Wallpaper</string>
+    <string name="wall_solid">Solid</string>
+    <string name="wall_gradient">Gradient</string>
+    <string name="wall_image">Image</string>
+    <string name="pick_image">Pick image from gallery</string>
+    <string name="clear_image">Remove image</string>
+
+    <string name="section_security">Security</string>
+    <string name="save_master">Remember master password</string>
+    <string name="save_master_desc">Encrypted on this device only. Never uploaded.</string>
+    <string name="forget_master">Forget saved master</string>
+
+    <string name="sites_lock">Sites access password</string>
+    <string name="sites_lock_desc">Require a password to view the saved site list. Stored encrypted on this device only.</string>
+    <string name="sites_lock_set">Set access password</string>
+    <string name="sites_lock_change">Change access password</string>
+    <string name="sites_lock_remove">Remove access password</string>
+    <string name="sites_lock_on">Access password is enabled</string>
+    <string name="sites_lock_new">New password</string>
+    <string name="sites_lock_confirm">Confirm password</string>
+    <string name="sites_lock_old">Current password</string>
+    <string name="sites_lock_save">Save</string>
+    <string name="sites_lock_err_empty">Please enter a password</string>
+    <string name="sites_lock_err_mismatch">The two passwords do not match</string>
+    <string name="sites_lock_err_old">Current password is incorrect</string>
+    <string name="sites_lock_remove_title">Remove access password</string>
+    <string name="sites_lock_remove_hint">Enter the current password to disable the site-list lock.</string>
+    <string name="sites_lock_saved">Access password saved</string>
+
+    <string name="sites_locked_title">Sites locked</string>
+    <string name="sites_locked_hint">Enter the access password to view the saved site list.</string>
+    <string name="sites_locked_unlock">Unlock</string>
+    <string name="sites_locked_err">Wrong password</string>
+
+    <string name="section_cloud">Cloud sync (GitHub)</string>
+    <string name="cloud_desc">Only the site list is uploaded. Your master password and logins never leave this device.</string>
+    <string name="gh_owner">Owner</string>
+    <string name="gh_repo">Repository</string>
+    <string name="gh_path">File path</string>
+    <string name="gh_branch">Branch</string>
+    <string name="gh_token">Personal access token</string>
+    <string name="auto_sync">Auto sync</string>
+    <string name="auto_sync_desc">Push new sites automatically after generation.</string>
+    <string name="sync_now">Sync now</string>
+    <string name="syncing">Syncing…</string>
+    <string name="sync_ok">Sync complete</string>
+    <string name="sync_not_configured">Cloud sync is not configured</string>
+    <string name="sync_failed">Sync failed: %1$s</string>
+    <string name="last_sync">Last sync: %1$s</string>
+    <string name="never">never</string>
+</resources>
