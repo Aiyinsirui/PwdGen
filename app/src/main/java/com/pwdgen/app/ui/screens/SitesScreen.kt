@@ -32,6 +32,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -75,6 +76,14 @@ fun SitesScreen(
             snackbar.showSnackbar(importOk)
             vm.clearSyncMessage()
         }
+    }
+
+    // Re-lock the site list whenever this screen is disposed (back / navigating
+    // away), so returning always requires the access password again. Previously
+    // `sitesUnlocked` stayed true for the whole session, which let the history
+    // page open without ever prompting.
+    DisposableEffect(Unit) {
+        onDispose { vm.lockSites() }
     }
 
     Scaffold(
