@@ -132,28 +132,8 @@ fun GenerateScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
-            // ------------------------------------------------ master password
-            var masterVisible by remember { mutableStateOf(false) }
-            OutlinedTextField(
-                value = state.master,
-                onValueChange = vm::onMaster,
-                label = { Text(stringResource(R.string.master_password)) },
-                singleLine = true,
-                visualTransformation = if (masterVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                trailingIcon = {
-                    IconButton(onClick = { masterVisible = !masterVisible }) {
-                        Icon(
-                            if (masterVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
-                            contentDescription = null
-                        )
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(8.dp))
-
             // ------------------------------------------------------------- site
+            // Field order follows the pwdgen CLI: site -> login -> master password.
             OutlinedTextField(
                 value = state.site,
                 onValueChange = vm::onSite,
@@ -171,7 +151,29 @@ fun GenerateScreen(
                 onValueChange = vm::onLogin,
                 label = { Text(stringResource(R.string.login)) },
                 singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(Modifier.height(8.dp))
+
+            // ------------------------------------------------ master password
+            var masterVisible by remember { mutableStateOf(false) }
+            OutlinedTextField(
+                value = state.master,
+                onValueChange = vm::onMaster,
+                label = { Text(stringResource(R.string.master_password)) },
+                singleLine = true,
+                visualTransformation = if (masterVisible) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                trailingIcon = {
+                    IconButton(onClick = { masterVisible = !masterVisible }) {
+                        Icon(
+                            if (masterVisible) Icons.Filled.VisibilityOff else Icons.Filled.Visibility,
+                            contentDescription = null
+                        )
+                    }
+                },
                 modifier = Modifier.fillMaxWidth()
             )
 
