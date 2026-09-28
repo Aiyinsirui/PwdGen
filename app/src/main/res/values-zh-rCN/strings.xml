@@ -40,6 +40,8 @@
     <string name="import_ok">站点已导入</string>
     <string name="clear_all">清空全部</string>
     <string name="clear_all_confirm">确定要删除所有已保存的站点吗？此操作无法撤销。</string>
+    <string name="delete_site_title">删除站点</string>
+    <string name="delete_site_confirm">确定要从已保存列表中删除“%1$s”吗？此操作无法撤销。</string>
 
     <!-- Settings screen -->
     <string name="settings_title">设置</string>

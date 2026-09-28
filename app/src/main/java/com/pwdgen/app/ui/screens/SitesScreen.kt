@@ -64,8 +64,8 @@ fun SitesScreen(
     var showImport by remember { mutableStateOf(false) }
     var showExport by remember { mutableStateOf(false) }
     var showClear by remember { mutableStateOf(false) }
+    var deleteTarget by remember { mutableStateOf<String?>(null) }
     var importText by remember { mutableStateOf("") }
-
     var lockInput by remember { mutableStateOf("") }
 
     val importOk = stringResource(R.string.import_ok)
@@ -190,7 +190,7 @@ fun SitesScreen(
                                     modifier = Modifier.weight(1f),
                                     style = MaterialTheme.typography.bodyLarge
                                 )
-                                IconButton(onClick = { vm.removeSite(entry.site) }) {
+                                IconButton(onClick = { deleteTarget = entry.site }) {
                                     Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete))
                                 }
                             }
@@ -291,6 +291,26 @@ fun SitesScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showClear = false }) { Text(stringResource(R.string.cancel)) }
+            }
+        )
+    }
+    // ------------------------------------------------------ delete site dlg
+    if (deleteTarget != null) {
+        val target = deleteTarget ?: ""
+        AlertDialog(
+            onDismissRequest = { deleteTarget = null },
+            title = { Text(stringResource(R.string.delete_site_title)) },
+            text = { Text(stringResource(R.string.delete_site_confirm, target)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    vm.removeSite(target)
+                    deleteTarget = null
+                }) {
+                    Text(stringResource(R.string.confirm), color = MaterialTheme.colorScheme.error)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { deleteTarget = null }) { Text(stringResource(R.string.cancel)) }
             }
         )
     }

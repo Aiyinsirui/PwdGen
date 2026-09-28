@@ -352,13 +352,41 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun provider(): RemoteStorage {
         val s = _ui.value
+        // Normalize owner/repo: accept a full URL or "owner/repo.git" pasted
+        // into either field, and strip "https://github.com/" / ".git".
+        val norm = normalizeRepo(s.ghOwner.trim(), s.ghRepo.trim())
         return GitHubStorage(
-            owner = s.ghOwner.trim(),
-            repo = s.ghRepo.trim(),
+            owner = norm.first,
+            repo = norm.second,
             path = s.ghPath.trim().ifBlank { SettingsRepository.DEFAULT_CLOUD_PATH },
             branch = s.ghBranch.trim().ifBlank { "main" },
             token = s.ghToken.trim()
         )
+    }
+    /**
+     * Split a GitHub repository reference into (owner, repo).
+     * Accepted forms (in either field):
+     *   https://github.com/owner/repo.git
+     *   owner/repo.git
+     *   /owner/repo.git
+     * A bare "repo" keeps the previously supplied owner.
+     */
+    private fun normalizeRepo(ownerIn: String, repoIn: String): Pair<String, String> {
+        var owner = ownerIn
+        var repo = repoIn
+        // If the repo field looks like a path/URL, split it.
+        val candidate = repo.removePrefix("https://").removePrefix("http://")
+            .removePrefix("github.com/").trimStart('/')
+        if (candidate.contains('/')) {
+            val parts = candidate.split('/')
+            owner = parts[0].trim().removeSuffix(".git").removeSuffix(".Git")
+            repo = parts.drop(1).joinToString("/").trim()
+        } else {
+            repo = repo.removeSuffix(".git").removeSuffix(".Git").trim()
+        }
+        owner = owner.removePrefix("https://").removePrefix("http://")
+            .removePrefix("github.com/").trim('/').removeSuffix(".git").trim()
+        return owner to repo
     }
 
     private suspend fun refreshCloudConfigured() {
@@ -384,9 +412,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             val result = withContext(Dispatchers.IO) {
                 try {
                     val remote = storage.pull()
-                    val remoteSites = SiteCodec.decode(remote)
+                    val remoteSites = if (remote.isNullOrBlank()) emptyList() else sites.decodePayload(remote)
                     if (remoteSites.isNotEmpty()) sites.merge(remoteSites)
-                    val localEncoded = SiteCodec.encode(sites.load())
+                    val localEncoded = sites.encodePayload(sites.load())
                     if (localEncoded.isNotEmpty()) storage.push(localEncoded)
                     SyncResult.Success
                 } catch (e: CloudException) {

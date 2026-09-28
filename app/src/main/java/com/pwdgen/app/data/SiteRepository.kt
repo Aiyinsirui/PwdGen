@@ -2,6 +2,8 @@ package com.pwdgen.app.data
 
 import android.content.Context
 import com.pwdgen.app.core.SiteEntry
+import com.pwdgen.app.crypto.SecureStore
+import com.pwdgen.app.crypto.SiteCrypto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -15,13 +17,22 @@ import java.io.File
  */
 class SiteRepository(private val context: Context) {
 
+    private val secure = SecureStore(context)
     private val file: File get() = File(context.filesDir, FILE_NAME)
+
+    /** Lazily-created random 256-bit key, persisted in [SecureStore]. */
+    private fun cryptoKey(): String {
+        secure.getString(SecureStore.KEY_SITES_CRYPTO)?.let { return it }
+        val key = SiteCrypto.generateKeyB64()
+        secure.putString(SecureStore.KEY_SITES_CRYPTO, key)
+        return key
+    }
 
     /** Read the current list. Never throws; missing/corrupt file -> empty. */
     suspend fun load(): List<SiteEntry> = withContext(Dispatchers.IO) {
         if (!file.exists()) return@withContext emptyList<SiteEntry>()
         try {
-            SiteCodec.decode(file.readText(Charsets.UTF_8))
+            decodePayload(file.readText(Charsets.UTF_8))
         } catch (e: Exception) {
             emptyList()
         }
@@ -30,8 +41,32 @@ class SiteRepository(private val context: Context) {
     /** Overwrite the whole list and return what was persisted. */
     suspend fun save(sites: List<SiteEntry>): List<SiteEntry> = withContext(Dispatchers.IO) {
         val deduped = dedupe(sites)
-        file.writeText(SiteCodec.encode(deduped), Charsets.UTF_8)
+        file.writeText(encodePayload(deduped), Charsets.UTF_8)
         deduped
+    }
+
+    /**
+     * Encode [sites] for on-disk storage and cloud upload: AES-256-GCM with a
+     * device key, so the plain base64 blob is never written or uploaded.
+     */
+    fun encodePayload(sites: List<SiteEntry>): String =
+        SiteCrypto.encrypt(SiteCodec.encode(sites), cryptoKey())
+
+    /**
+     * Decode a payload from disk or cloud. If a blob is the legacy plain
+     * base64 format (still produced by previous versions), migrate it in place
+     * and return its sites.
+     */
+    fun decodePayload(payload: String): List<SiteEntry> {
+        if (payload.isBlank()) return emptyList()
+        if (SiteCrypto.isEncrypted(payload)) {
+            val plain = SiteCrypto.decrypt(payload, cryptoKey()) ?: return emptyList()
+            return SiteCodec.decode(plain)
+        }
+        val legacy = SiteCodec.decode(payload)
+        if (legacy.isEmpty()) return emptyList()
+        file.writeText(encodePayload(legacy), Charsets.UTF_8)
+        return legacy
     }
 
     /**
