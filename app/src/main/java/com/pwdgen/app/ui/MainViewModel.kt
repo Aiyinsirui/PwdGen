@@ -358,7 +358,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         return GitHubStorage(
             owner = norm.first,
             repo = norm.second,
-            path = s.ghPath.trim().ifBlank { SettingsRepository.DEFAULT_CLOUD_PATH },
+            path = s.ghPath.trim().trimStart('/').ifBlank { SettingsRepository.DEFAULT_CLOUD_PATH },
             branch = s.ghBranch.trim().ifBlank { "main" },
             token = s.ghToken.trim()
         )
@@ -372,20 +372,24 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
      * A bare "repo" keeps the previously supplied owner.
      */
     private fun normalizeRepo(ownerIn: String, repoIn: String): Pair<String, String> {
-        var owner = ownerIn
-        var repo = repoIn
-        // If the repo field looks like a path/URL, split it.
-        val candidate = repo.removePrefix("https://").removePrefix("http://")
-            .removePrefix("github.com/").trimStart('/')
+        var owner = ownerIn.trim()
+        var repo = repoIn.trim()
+        // Accept "https://github.com/owner/repo.git", "owner/repo.git",
+        // "/owner/repo.git", or just "repo". Always strip scheme, host and .git.
+        val candidate = repo
+            .removePrefix("https://").removePrefix("http://")
+            .removePrefix("github.com/")
+            .trim('/')
         if (candidate.contains('/')) {
-            val parts = candidate.split('/')
-            owner = parts[0].trim().removeSuffix(".git").removeSuffix(".Git")
-            repo = parts.drop(1).joinToString("/").trim()
-        } else {
-            repo = repo.removeSuffix(".git").removeSuffix(".Git").trim()
+            val parts = candidate.split('/').filter { it.isNotBlank() }
+            if (parts.size >= 2) {
+                owner = parts[parts.size - 2]
+                repo = parts[parts.size - 1]
+            }
         }
         owner = owner.removePrefix("https://").removePrefix("http://")
-            .removePrefix("github.com/").trim('/').removeSuffix(".git").trim()
+            .removePrefix("github.com/").trim('/').removeSuffix(".git").removeSuffix(".Git").trim()
+        repo = repo.removeSuffix(".git").removeSuffix(".Git").trim()
         return owner to repo
     }
 

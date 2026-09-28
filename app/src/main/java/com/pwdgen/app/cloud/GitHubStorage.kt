@@ -74,8 +74,12 @@ class GitHubStorage(
         }
     }
 
-    private fun contentsUrl(): String =
-        "https://api.github.com/repos/$owner/$repo/contents/$path?ref=$branch"
+    private fun contentsUrl(): String {
+        // Defensive: the Contents API rejects paths with a leading slash or
+        // empty segments, which produce a confusing 404 on PUT.
+        val cleanPath = path.trim().trimStart('/')
+        return "https://api.github.com/repos/$owner/$repo/contents/$cleanPath?ref=$branch"
+    }
 
     private class Resp(val code: Int, val body: String)
 

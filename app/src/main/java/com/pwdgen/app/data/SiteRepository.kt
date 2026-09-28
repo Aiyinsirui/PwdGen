@@ -2,8 +2,6 @@ package com.pwdgen.app.data
 
 import android.content.Context
 import com.pwdgen.app.core.SiteEntry
-import com.pwdgen.app.crypto.SecureStore
-import com.pwdgen.app.crypto.SiteCrypto
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
@@ -14,19 +12,14 @@ import java.io.File
  * The list is stored as a single base64 blob in `filesDir/sites.b64`.
  * Writes are immediate ("local first"): generating a password for a new site
  * persists it right away, cloud sync is a separate, optional step.
+ *
+ * Storage/upload uses plain Base64 encoding (NOT encryption) so the blob can be
+ * shared across devices. The site list contains only site names and optional
+ * logins; master passwords and generated passwords are never stored or uploaded.
  */
 class SiteRepository(private val context: Context) {
 
-    private val secure = SecureStore(context)
     private val file: File get() = File(context.filesDir, FILE_NAME)
-
-    /** Lazily-created random 256-bit key, persisted in [SecureStore]. */
-    private fun cryptoKey(): String {
-        secure.getString(SecureStore.KEY_SITES_CRYPTO)?.let { return it }
-        val key = SiteCrypto.generateKeyB64()
-        secure.putString(SecureStore.KEY_SITES_CRYPTO, key)
-        return key
-    }
 
     /** Read the current list. Never throws; missing/corrupt file -> empty. */
     suspend fun load(): List<SiteEntry> = withContext(Dispatchers.IO) {
@@ -45,28 +38,13 @@ class SiteRepository(private val context: Context) {
         deduped
     }
 
-    /**
-     * Encode [sites] for on-disk storage and cloud upload: AES-256-GCM with a
-     * device key, so the plain base64 blob is never written or uploaded.
-     */
-    fun encodePayload(sites: List<SiteEntry>): String =
-        SiteCrypto.encrypt(SiteCodec.encode(sites), cryptoKey())
+    /** Encode [sites] for on-disk storage and cloud upload (plain base64). */
+    fun encodePayload(sites: List<SiteEntry>): String = SiteCodec.encode(sites)
 
-    /**
-     * Decode a payload from disk or cloud. If a blob is the legacy plain
-     * base64 format (still produced by previous versions), migrate it in place
-     * and return its sites.
-     */
+    /** Decode a payload from disk or cloud. */
     fun decodePayload(payload: String): List<SiteEntry> {
         if (payload.isBlank()) return emptyList()
-        if (SiteCrypto.isEncrypted(payload)) {
-            val plain = SiteCrypto.decrypt(payload, cryptoKey()) ?: return emptyList()
-            return SiteCodec.decode(plain)
-        }
-        val legacy = SiteCodec.decode(payload)
-        if (legacy.isEmpty()) return emptyList()
-        file.writeText(encodePayload(legacy), Charsets.UTF_8)
-        return legacy
+        return SiteCodec.decode(payload)
     }
 
     /**

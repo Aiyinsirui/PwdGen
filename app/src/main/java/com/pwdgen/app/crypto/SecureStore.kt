@@ -47,6 +47,5 @@ class SecureStore(context: Context) {
         const val KEY_CLOUD_TOKEN = "cloud_token"
         const val KEY_SAVED_MASTER = "saved_master"
         const val KEY_SITES_LOCK = "sites_lock"
-        const val KEY_SITES_CRYPTO = "sites_crypto_key"
     }
 }
