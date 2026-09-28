@@ -271,6 +271,20 @@ fun SettingsScreen(
                     checked = state.saveMaster,
                     onCheckedChange = vm::setSaveMaster
                 )
+                ToggleRow(
+                    label = stringResource(R.string.save_site),
+                    sub = stringResource(R.string.save_site_desc),
+                    checked = state.saveSite,
+                    onCheckedChange = vm::setSaveSite
+                )
+                if (state.saveSite) {
+                    ToggleRow(
+                        label = stringResource(R.string.save_login),
+                        sub = stringResource(R.string.save_login_desc),
+                        checked = state.saveLogin,
+                        onCheckedChange = vm::setSaveLogin
+                    )
+                }
                 if (state.rememberedMaster) {
                     TextButtonRow(
                         text = stringResource(R.string.forget_master),

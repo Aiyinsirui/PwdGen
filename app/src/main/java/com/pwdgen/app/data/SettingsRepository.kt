@@ -38,6 +38,11 @@ class SettingsRepository(private val context: Context) {
 
     // ---- optional master persistence ----
     val saveMaster: Flow<Boolean> = store.data.map { it[KEY_SAVE_MASTER] ?: false }
+    // ---- optional site/login persistence ----
+    /** Master switch: persist the site name when generating. */
+    val saveSite: Flow<Boolean> = store.data.map { it[KEY_SAVE_SITE] ?: true }
+    /** Sub-switch (only meaningful when [saveSite] is on): also persist login. */
+    val saveLogin: Flow<Boolean> = store.data.map { it[KEY_SAVE_LOGIN] ?: false }
 
     suspend fun setLanguage(v: String) = put(KEY_LANG, v)
     suspend fun setThemeMode(v: String) = put(KEY_THEME, v)
@@ -55,6 +60,8 @@ class SettingsRepository(private val context: Context) {
     suspend fun setLastSyncAt(v: Long) = put(KEY_LAST_SYNC, v)
     suspend fun setCustomEndpoint(v: String) = put(KEY_CUSTOM_ENDPOINT, v)
     suspend fun setSaveMaster(v: Boolean) = put(KEY_SAVE_MASTER, v)
+    suspend fun setSaveSite(v: Boolean) = put(KEY_SAVE_SITE, v)
+    suspend fun setSaveLogin(v: Boolean) = put(KEY_SAVE_LOGIN, v)
 
     private suspend fun <T> put(key: androidx.datastore.preferences.core.Preferences.Key<T>, value: T) {
         store.edit { it[key] = value }
@@ -94,5 +101,7 @@ class SettingsRepository(private val context: Context) {
         private val KEY_LAST_SYNC = androidx.datastore.preferences.core.longPreferencesKey("last_sync")
         private val KEY_CUSTOM_ENDPOINT = stringPreferencesKey("custom_endpoint")
         private val KEY_SAVE_MASTER = booleanPreferencesKey("save_master")
+        private val KEY_SAVE_SITE = booleanPreferencesKey("save_site")
+        private val KEY_SAVE_LOGIN = booleanPreferencesKey("save_login")
     }
 }

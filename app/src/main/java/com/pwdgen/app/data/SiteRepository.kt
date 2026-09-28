@@ -35,17 +35,31 @@ class SiteRepository(private val context: Context) {
     }
 
     /**
-     * Add a site to the stored list (case-insensitive dedup).
-     * @return the new full list, plus whether the site was actually new.
+     * Add a site (and optionally its login) to the stored list.
+     *
+     * Dedup is case-insensitive on the site name. If the site already exists
+     * without a login and this call supplies one, the existing entry is upgraded
+     * in place (an existing login is never overwritten).
+     *
+     * @return the new full list, plus whether anything changed.
      */
-    suspend fun add(site: String): Pair<List<SiteEntry>, Boolean> {
+    suspend fun add(site: String, login: String? = null): Pair<List<SiteEntry>, Boolean> {
         val name = site.trim()
         if (name.isEmpty()) return load() to false
+        val log = login?.trim()?.ifBlank { null }
         val current = load()
-        if (current.any { it.site.equals(name, ignoreCase = true) }) {
+        val idx = current.indexOfFirst { it.site.equals(name, ignoreCase = true) }
+        if (idx >= 0) {
+            val existing = current[idx]
+            if (existing.login == null && log != null) {
+                val updated = current.toMutableList().apply {
+                    set(idx, existing.copy(site = name, login = log))
+                }
+                return save(updated) to true
+            }
             return current to false
         }
-        val updated = current + SiteEntry(name)
+        val updated = current + SiteEntry(name, log)
         return save(updated) to true
     }
 
@@ -65,14 +79,31 @@ class SiteRepository(private val context: Context) {
     companion object {
         const val FILE_NAME = "sites.b64"
 
-        /** Stable order-preserving, case-insensitive de-duplication. */
+        /**
+         * Stable, order-preserving, case-insensitive de-duplication.
+         *
+         * The site name is the dedup key. When the same site appears more than
+         * once, the entry that carries a login wins over one that does not; a
+         * later more-complete entry also keeps its position.
+         */
         fun dedupe(sites: List<SiteEntry>): List<SiteEntry> {
-            val seen = HashSet<String>()
+            val indexBySite = HashMap<String, Int>()
             val out = ArrayList<SiteEntry>(sites.size)
             for (s in sites) {
                 val name = s.site.trim()
                 if (name.isEmpty()) continue
-                if (seen.add(name.lowercase())) out.add(s.copy(site = name))
+                val normalized = s.copy(site = name)
+                val key = name.lowercase()
+                val existingIdx = indexBySite[key]
+                if (existingIdx == null) {
+                    indexBySite[key] = out.size
+                    out.add(normalized)
+                } else {
+                    val existing = out[existingIdx]
+                    if (existing.login == null && normalized.login != null) {
+                        out[existingIdx] = normalized
+                    }
+                }
             }
             return out
         }

@@ -66,6 +66,10 @@
     <string name="save_master">Remember master password</string>
     <string name="save_master_desc">Encrypted on this device only. Never uploaded.</string>
     <string name="forget_master">Forget saved master</string>
+    <string name="save_site">Remember site</string>
+    <string name="save_site_desc">Save the site name of every generated password (base64 on this device / your private cloud).</string>
+    <string name="save_login">Also remember login</string>
+    <string name="save_login_desc">Store the site and its login together as one entry. The login joins the same base64 blob.</string>
 
     <string name="sites_lock">Sites access password</string>
     <string name="sites_lock_desc">Require a password to view the saved site list. Stored encrypted on this device only.</string>

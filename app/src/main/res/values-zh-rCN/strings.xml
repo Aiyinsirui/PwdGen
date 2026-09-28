@@ -66,6 +66,10 @@
     <string name="save_master">记住主密码</string>
     <string name="save_master_desc">仅在本机加密保存，绝不上传。</string>
     <string name="forget_master">清除已保存的主密码</string>
+    <string name="save_site">记住站点</string>
+    <string name="save_site_desc">每次生成密码时保存站点名（本机 base64 / 私人云端）。</string>
+    <string name="save_login">同时记住登录名</string>
+    <string name="save_login_desc">把站点和登录名合为一个条目保存，登录名与站点同处一份 base64。</string>
 
     <string name="sites_lock">站点访问密码</string>
     <string name="sites_lock_desc">查看已保存的站点列表需要输入密码。仅在本机加密保存。</string>

@@ -186,7 +186,7 @@ fun SitesScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    entry.site,
+                                    if (entry.login.isNullOrBlank()) entry.site else "[${entry.site}:${entry.login}]",
                                     modifier = Modifier.weight(1f),
                                     style = MaterialTheme.typography.bodyLarge
                                 )

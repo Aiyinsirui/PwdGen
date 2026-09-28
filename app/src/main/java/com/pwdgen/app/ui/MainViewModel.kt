@@ -49,6 +49,8 @@ data class UiState(
     val wallpaperGradientIndex: Int = 0,
     val wallpaperImageUri: String? = null,
     val saveMaster: Boolean = false,
+    val saveSite: Boolean = true,
+    val saveLogin: Boolean = false,
     val autoSync: Boolean = false,
     val lastSyncAt: Long = 0L,
     // github form
@@ -80,6 +82,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 wallpaperGradientIndex = settings.wallpaperGradientIndex.first(),
                 wallpaperImageUri = settings.wallpaperImageUri.first()?.ifBlank { null },
                 saveMaster = settings.saveMaster.first(),
+                saveSite = settings.saveSite.first(),
+                saveLogin = settings.saveLogin.first(),
                 autoSync = settings.autoSync.first(),
                 lastSyncAt = settings.lastSyncAt.first(),
                 ghOwner = settings.githubOwner.first(),
@@ -159,7 +163,14 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 set { copy(message = "err_generate") }
                 return@launch
             }
-            val (list, isNew) = sites.add(s.site.trim())
+            val (list, isNew) = if (s.saveSite) {
+                sites.add(
+                    s.site.trim(),
+                    if (s.saveLogin) s.login.trim().ifBlank { null } else null
+                )
+            } else {
+                sites.load() to false
+            }
             set { copy(generated = pwd, sites = list) }
             if (isNew && _ui.value.autoSync) {
                 // Upload the refreshed list; silent so a failure doesn't nag.
@@ -188,6 +199,20 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
                 secure.putString(SecureStore.KEY_SAVED_MASTER, null)
                 set { copy(saveMaster = false, rememberedMaster = false) }
             }
+        }
+    }
+
+    fun setSaveSite(enabled: Boolean) {
+        viewModelScope.launch {
+            settings.setSaveSite(enabled)
+            set { copy(saveSite = enabled) }
+        }
+    }
+
+    fun setSaveLogin(enabled: Boolean) {
+        viewModelScope.launch {
+            settings.setSaveLogin(enabled)
+            set { copy(saveLogin = enabled) }
         }
     }
 

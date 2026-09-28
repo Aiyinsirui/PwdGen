@@ -8,24 +8,37 @@ import java.nio.charset.StandardCharsets
  * Encodes/decodes the site list.
  *
  * On-disk / in-cloud format is a single base64 blob (NO_WRAP) containing one
- * UTF-8 "site" per line. The raw (decoded) format is intentionally simple so
+ * UTF-8 entry per line. The raw (decoded) format is intentionally simple so
  * the cloud file stays human-auditable once decoded.
+ *
+ * Line format (backward compatible):
+ *   - legacy: "site"           -> SiteEntry(site, login = null)
+ *   - new:    "site\tlogin"    -> SiteEntry(site, login)
+ * Only the FIRST tab separates the two fields; anything after it is part of the
+ * login (defensive; in practice logins never contain tabs).
  */
 object SiteCodec {
 
-    /** Build the plaintext payload (one site per line, trailing newline). */
+    private const val SEP = '\t'
+
+    /** Build the plaintext payload (one entry per line, trailing newline). */
     fun encodeRaw(sites: List<SiteEntry>): String {
         if (sites.isEmpty()) return ""
         val sb = StringBuilder()
         for (s in sites) {
             val name = s.site.trim()
             if (name.isEmpty()) continue
-            sb.append(name).append('\n')
+            sb.append(name)
+            val login = s.login?.trim()
+            if (!login.isNullOrEmpty()) {
+                sb.append(SEP).append(login)
+            }
+            sb.append('\n')
         }
         return sb.toString()
     }
 
-    /** base64(utf8(site\nsite\n...)) with NO_WRAP so it is a single line. */
+    /** base64(utf8(site\tsite\n...)) with NO_WRAP so it is a single line. */
     fun encode(sites: List<SiteEntry>): String {
         val raw = encodeRaw(sites)
         return if (raw.isEmpty()) "" else
@@ -49,11 +62,31 @@ object SiteCodec {
 
     /** Parse the plaintext payload (used when the user edits the raw form). */
     fun parseRaw(raw: String): List<SiteEntry> {
-        val out = LinkedHashSet<String>()
+        // De-dup key: "site\rlogin" (both lowercased). Same site may appear once
+        // with a login and once without, but obviously-duplicate lines collapse.
+        // Order is preserved.
+        val seen = LinkedHashSet<String>()
+        val out = ArrayList<SiteEntry>()
         raw.split('\n', '\r').forEach { line ->
-            val name = line.trim()
-            if (name.isNotEmpty()) out.add(name)
+            val trimmed = line.trim()
+            if (trimmed.isEmpty()) return@forEach
+            val entry = parseLine(trimmed)
+            if (entry.site.isEmpty()) return@forEach
+            val key = entry.site.lowercase() + '\n' + (entry.login ?: "").lowercase()
+            if (seen.add(key)) out.add(entry)
         }
-        return out.map { SiteEntry(it) }
+        return out
+    }
+
+    /** Parse a single raw line into a [SiteEntry]; legacy lines have no tab. */
+    private fun parseLine(line: String): SiteEntry {
+        val idx = line.indexOf(SEP)
+        return if (idx < 0) {
+            SiteEntry(line.trim(), null)
+        } else {
+            val site = line.substring(0, idx).trim()
+            val login = line.substring(idx + 1).trim().ifBlank { null }
+            SiteEntry(site, login)
+        }
     }
 }
