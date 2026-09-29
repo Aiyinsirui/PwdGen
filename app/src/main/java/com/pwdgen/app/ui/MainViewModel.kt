@@ -287,9 +287,9 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
     // ----------------------------------------------------------------- sites
 
-    fun removeSite(name: String) {
+    fun removeSite(name: String, login: String? = null) {
         viewModelScope.launch {
-            sites.remove(name)
+            sites.remove(name, login)
             val list = sites.load()
             set { copy(sites = list) }
             if (_ui.value.autoSync) syncNow(silent = true)

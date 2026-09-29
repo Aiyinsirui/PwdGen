@@ -1,9 +1,9 @@
-# PwdGen v1.2.1 — 交付包说明 (pwdgen_v2)
+# PwdGen v1.3.0 — 交付包说明 (pwdgen_v2)
 
 > 生成时间：2026-09-28 (Asia/Shanghai)
-> **最近更新：2026-09-29 (Asia/Shanghai) — 站点存储回退纯base64、修复GitHub同步404(.git后缀残留)**
+> **最近更新：2026-09-29 (Asia/Shanghai) — 历史记录去重规则优化、login脱敏显示**
 > 包名 (applicationId)：`com.pwdgen.app`
-> 版本：versionCode=4 / versionName=1.2.1
+> 版本：versionCode=5 / versionName=1.3.0
 > minSdk=24 / targetSdk=35 / compileSdk=35
 > 对应 Git 提交：`80627f9` (master)
 
@@ -11,6 +11,19 @@
 
 ## 一、本次交付包含的改动
 
+
+### K. 历史记录去重规则优化 + login脱敏显示（v1.3.0）
+- **去重规则修复**：去重键从「仅 site」改为「site + login 组合」。
+  - 仅存 site：相同 site 算同一条（douyin 与 douyin 去重）。
+  - 同时存 site+login：site 相同但 login 不同算不同条（douyin/19999、douyin/19998、douyin/19997 各为独立记录）。
+  - 只有当「site+login 完全一致」才去重。
+- **login 脱敏显示**：
+  - 手机号（11 位纯数字）：19890908798 → 198******98（前3位 + ****** + 后2位）。
+  - 非手机号：sabcd → s****（仅显示首字符）。
+- 文件改动：
+  1. `SiteRepository.kt`：`dedupe()`/`add()`/`remove()` 去重键改为 site+login 组合；
+  2. `MainViewModel.kt`：`removeSite()` 增加 login 参数；
+  3. `SitesScreen.kt`：新增 `maskLogin()` 脱敏函数，列表 key 改为 site+login，删除弹窗携带 login。
 
 ### J. 站点存储回退纯base64 + 修复GitHub同步404（v1.2.1）
 - **背景**：两项需求——跨设备通用优先于本机加密；覆盖安装后同步仍报 404。

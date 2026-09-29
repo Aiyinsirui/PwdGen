@@ -61,23 +61,20 @@ class SiteRepository(private val context: Context) {
         if (name.isEmpty()) return load() to false
         val log = login?.trim()?.ifBlank { null }
         val current = load()
-        val idx = current.indexOfFirst { it.site.equals(name, ignoreCase = true) }
+        val idx = current.indexOfFirst {
+            it.site.equals(name, ignoreCase = true) && (it.login ?: "") == (log ?: "")
+        }
         if (idx >= 0) {
-            val existing = current[idx]
-            if (existing.login == null && log != null) {
-                val updated = current.toMutableList().apply {
-                    set(idx, existing.copy(site = name, login = log))
-                }
-                return save(updated) to true
-            }
             return current to false
         }
         val updated = current + SiteEntry(name, log)
         return save(updated) to true
     }
 
-    suspend fun remove(site: String) {
-        val updated = load().filterNot { it.site.equals(site, ignoreCase = true) }
+    suspend fun remove(site: String, login: String? = null) {
+        val updated = load().filterNot {
+            it.site.equals(site, ignoreCase = true) && (it.login ?: "") == (login ?: "")
+        }
         save(updated)
     }
 
@@ -95,27 +92,23 @@ class SiteRepository(private val context: Context) {
         /**
          * Stable, order-preserving, case-insensitive de-duplication.
          *
-         * The site name is the dedup key. When the same site appears more than
-         * once, the entry that carries a login wins over one that does not; a
-         * later more-complete entry also keeps its position.
+         * The dedup key is the (site, login) pair (login treated as "" when
+         * absent). Only entries whose site AND login both match are considered
+         * duplicates; two entries sharing a site but with different logins are
+         * kept as separate records.
          */
         fun dedupe(sites: List<SiteEntry>): List<SiteEntry> {
-            val indexBySite = HashMap<String, Int>()
+            val index = HashMap<String, Int>()
             val out = ArrayList<SiteEntry>(sites.size)
             for (s in sites) {
                 val name = s.site.trim()
                 if (name.isEmpty()) continue
                 val normalized = s.copy(site = name)
-                val key = name.lowercase()
-                val existingIdx = indexBySite[key]
+                val key = name.lowercase() + "\n" + (normalized.login ?: "").lowercase()
+                val existingIdx = index[key]
                 if (existingIdx == null) {
-                    indexBySite[key] = out.size
+                    index[key] = out.size
                     out.add(normalized)
-                } else {
-                    val existing = out[existingIdx]
-                    if (existing.login == null && normalized.login != null) {
-                        out[existingIdx] = normalized
-                    }
                 }
             }
             return out

@@ -64,7 +64,7 @@ fun SitesScreen(
     var showImport by remember { mutableStateOf(false) }
     var showExport by remember { mutableStateOf(false) }
     var showClear by remember { mutableStateOf(false) }
-    var deleteTarget by remember { mutableStateOf<String?>(null) }
+    var deleteTarget by remember { mutableStateOf<Pair<String, String?>?>(null) }
     var importText by remember { mutableStateOf("") }
     var lockInput by remember { mutableStateOf("") }
 
@@ -174,7 +174,7 @@ fun SitesScreen(
                 )
             } else {
                 LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(state.sites, key = { it.site }) { entry ->
+                    items(state.sites, key = { it.site + "\u0000" + (it.login ?: "") }) { entry ->
                         Card(
                             modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
                             colors = CardDefaults.cardColors(
@@ -186,11 +186,11 @@ fun SitesScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    if (entry.login.isNullOrBlank()) entry.site else "[${entry.site}:${entry.login}]",
+                                    if (entry.login.isNullOrBlank()) entry.site else "[${entry.site}:${maskLogin(entry.login)}]",
                                     modifier = Modifier.weight(1f),
                                     style = MaterialTheme.typography.bodyLarge
                                 )
-                                IconButton(onClick = { deleteTarget = entry.site }) {
+                                IconButton(onClick = { deleteTarget = entry.site to entry.login }) {
                                     Icon(Icons.Filled.Delete, contentDescription = stringResource(R.string.delete))
                                 }
                             }
@@ -296,14 +296,15 @@ fun SitesScreen(
     }
     // ------------------------------------------------------ delete site dlg
     if (deleteTarget != null) {
-        val target = deleteTarget ?: ""
+        val (targetSite, targetLogin) = deleteTarget!!
+        val target = if (targetLogin.isNullOrBlank()) targetSite else "[${targetSite}:" + maskLogin(targetLogin) + "]"
         AlertDialog(
             onDismissRequest = { deleteTarget = null },
             title = { Text(stringResource(R.string.delete_site_title)) },
             text = { Text(stringResource(R.string.delete_site_confirm, target)) },
             confirmButton = {
                 TextButton(onClick = {
-                    vm.removeSite(target)
+                    vm.removeSite(targetSite, targetLogin)
                     deleteTarget = null
                 }) {
                     Text(stringResource(R.string.confirm), color = MaterialTheme.colorScheme.error)
@@ -314,4 +315,21 @@ fun SitesScreen(
             }
         )
     }
+}
+
+
+/**
+ * Mask a login value for display in the history list.
+ *
+ *  - 11-digit mainland China mobile number: 19890908798 -> "198******98"
+ *  - any other value: show only the first character followed by asterisks,
+ *    "sabcd" -> "s****"
+ */
+private fun maskLogin(login: String): String {
+    val v = login.trim()
+    if (v.isEmpty()) return ""
+    if (v.length == 11 && v.all { it.isDigit() }) {
+        return v.substring(0, 3) + "******" + v.substring(9)
+    }
+    return v.substring(0, 1) + "****"
 }
